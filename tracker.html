@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Boat GPS Tracker</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; text-align: center; }
+    #status { font-weight: bold; color: #2e7d32; margin-top: 15px; }
+  </style>
+</head>
+<body>
+  <h2>Broadcasting Boat Location...</h2>
+  <div id="status">Waiting for GPS fix...</div>
+
+  <!-- Load Firebase Compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBQLj-ryoDvZQHLjDxLcrl-93UMDosTfOI",
+      authDomain: "locationdb-79736.firebaseapp.com",
+      databaseURL: "https://locationdb-79736-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "locationdb-79736",
+      storageBucket: "locationdb-79736.firebasestorage.app",
+      messagingSenderId: "178532325236",
+      appId: "1:178532325236:web:6d75f1309637969b3b7e21",
+      measurementId: "G-E91GDHZ708"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.watchPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+
+          db.ref('boat_trail').push({
+            lat: lat,
+            lng: lng,
+            speed: position.coords.speed,
+            timestamp: Date.now()
+          });
+
+          document.getElementById("status").innerText = 
+            `Broadcasting Live: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        },
+        (error) => {
+          document.getElementById("status").innerText = "GPS Error: " + error.message;
+        },
+        { enableHighAccuracy: true }
+      );
+    } else {
+      document.getElementById("status").innerText = "Geolocation is not supported on this browser.";
+    }
+  </script>
+</body>
+</html>
