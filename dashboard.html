@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Boat Location Dashboard</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    body { margin: 0; padding: 0; }
+    #map { height: 100vh; width: 100vw; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <!-- Load Leaflet & Firebase SDKs -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+  <script>
+    // Initialize map
+    const map = L.map('map').setView([0, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    let marker = null;
+    const trailCoordinates = [];
+    const boatTrail = L.polyline(trailCoordinates, { color: 'red', weight: 4 }).addTo(map);
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBQLj-ryoDvZQHLjDxLcrl-93UMDosTfOI",
+      authDomain: "locationdb-79736.firebaseapp.com",
+      databaseURL: "https://locationdb-79736-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "locationdb-79736",
+      storageBucket: "locationdb-79736.firebasestorage.app",
+      messagingSenderId: "178532325236",
+      appId: "1:178532325236:web:6d75f1309637969b3b7e21",
+      measurementId: "G-E91GDHZ708"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+
+    let isFirstPoint = true;
+
+    // Listen to incoming trail points in real-time
+    firebase.database().ref('boat_trail').on('child_added', (snapshot) => {
+      const data = snapshot.val();
+      if (data && data.lat && data.lng) {
+        const newPos = [data.lat, data.lng];
+        
+        trailCoordinates.push(newPos);
+        boatTrail.setLatLngs(trailCoordinates);
+        
+        if (!marker) {
+          marker = L.marker(newPos).addTo(map);
+        } else {
+          marker.setLatLng(newPos);
+        }
+        
+        if (isFirstPoint) {
+          map.setView(newPos, 13);
+          isFirstPoint = false;
+        } else {
+          map.panTo(newPos);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
